@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
 const evaluationSteps = [
-  'Initializing AI Core...', 
-  'Parsing Document Structure...', 
-  'Analyzing Student Responses...', 
-  'Cross-referencing Key Concepts...', 
-  'Calculating Scores...', 
-  'Compiling Final Report...'
+  'Initializing AI Assessment Core...', 
+  'Parsing Assessment Document...', 
+  'Analyzing Teacher Performance Metrics...', 
+  'Cross-referencing Pedagogical Standards...', 
+  'Generating Actionable Feedback...', 
+  'Compiling Final Evaluation Report...'
 ];
 
 export const AiEvaluationLoader: React.FC = () => {
@@ -60,7 +60,7 @@ export const AiEvaluationLoader: React.FC = () => {
           <div className="absolute w-2 h-2 bg-violet-400 rounded-full animate-orbit-reverse"></div>
         </div>
         <div className="text-center">
-          <h3 className="text-2xl font-semibold text-white mb-2">Entering Agentic World</h3>
+          <h3 className="text-2xl font-semibold text-white mb-2">AI Evaluation in Progress</h3>
           <p className="text-lg text-indigo-300 font-medium transition-all duration-500 ease-in-out">
             {evaluationSteps[currentStep]}
           </p>
@@ -71,4 +71,3 @@ export const AiEvaluationLoader: React.FC = () => {
 };
 
 export default AiEvaluationLoader;
-
