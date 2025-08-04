@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Upload, FileText } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, FileText, CheckCircle2, XCircle } from 'lucide-react';
 import { AiEvaluationLoader } from './AiEvaluationLoader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -18,10 +18,12 @@ export const ReassessmentPdfUpload: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null);
-  const [report, setReport] = useState<string | null>(null);
+  const [reports, setReports] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,6 +38,7 @@ export const ReassessmentPdfUpload: React.FC = () => {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (file && file.type === 'application/pdf') {
       setSelectedFile(file);
@@ -48,7 +51,19 @@ export const ReassessmentPdfUpload: React.FC = () => {
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    setIsDragging(true);
   };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isGenerating) {
+      loaderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [isGenerating]);
 
   const handleUpload = async () => {
     if (!selectedFile) {
@@ -58,7 +73,6 @@ export const ReassessmentPdfUpload: React.FC = () => {
     setIsUploading(true);
     setError(null);
     setUploadResponse(null);
-    setReport(null); // Reset report to avoid stale data
 
     const formData = new FormData();
     formData.append('files', selectedFile);
@@ -85,7 +99,7 @@ export const ReassessmentPdfUpload: React.FC = () => {
             const genData = await genRes.json();
             if (genRes.ok && typeof genData.data === 'string' && genData.data.trim().length > 0) {
               console.log('Raw report data:', genData.data); // Debug raw report
-              setReport(genData.data);
+              setReports(prevReports => [...prevReports, genData.data]);
             } else {
               setError('No report content was returned by the server.');
             }
@@ -120,24 +134,48 @@ export const ReassessmentPdfUpload: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div
-            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
-              selectedFile ? 'border-green-400 bg-green-50' : 'border-gray-300 bg-gray-50 hover:border-indigo-400 hover:bg-indigo-50'
+            className={`relative rounded-xl p-8 text-center transition-all duration-300 ease-in-out cursor-pointer group ${
+              isDragging
+                ? 'border-4 border-dashed border-indigo-400 bg-indigo-100 scale-105 shadow-lg'
+                : 'border-2 border-dashed border-gray-300 bg-gray-50'
+            } ${
+              selectedFile
+                ? 'border-solid border-green-500 bg-green-50'
+                : 'hover:border-indigo-400 hover:bg-indigo-50 hover:shadow-md'
             }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
-            onClick={() => inputRef.current?.click()}
+            onDragLeave={handleDragLeave}
+            onClick={() => !selectedFile && inputRef.current?.click()}
           >
             {selectedFile ? (
-              <div className="flex flex-col items-center gap-2">
-                <FileText className="w-8 h-8 text-green-500" />
-                <span className="font-medium text-green-700">{selectedFile.name}</span>
-                <span className="text-xs text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+              <div className="flex flex-col items-center justify-center gap-4 text-green-700">
+                <CheckCircle2 className="w-16 h-16 text-green-500" />
+                <div className="text-center">
+                  <p className="font-semibold text-lg">File Ready!</p>
+                  <p className="font-medium">{selectedFile.name}</p>
+                  <p className="text-sm text-gray-600">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+                <button
+                  onClick={() => setSelectedFile(null)}
+                  className="absolute top-2 right-2 text-gray-500 hover:text-red-600 transition-colors"
+                  aria-label="Remove file"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2">
-                <Upload className="w-8 h-8 text-indigo-600" />
-                <span className="font-medium text-gray-700">Drag & drop or click to select PDF</span>
-                <span className="text-xs text-gray-400">PDF only, max 20MB</span>
+              <div className="flex flex-col items-center justify-center gap-4 text-gray-600">
+                <Upload
+                  className={`w-16 h-16 text-gray-400 transition-transform duration-300 ease-in-out ${
+                    isDragging ? 'scale-110 text-indigo-600' : 'group-hover:scale-110 group-hover:text-indigo-500'
+                  }`}
+                />
+                <div className="text-center">
+                  <p className="font-semibold text-lg">Drop your PDF here</p>
+                  <p className="text-gray-500">or click to browse</p>
+                  <p className="text-xs text-gray-400 mt-2">Maximum file size: 20MB</p>
+                </div>
               </div>
             )}
             <input
@@ -180,10 +218,11 @@ export const ReassessmentPdfUpload: React.FC = () => {
         </Card>
       )}
 
-      {isGenerating && <AiEvaluationLoader />}
+      <div ref={loaderRef} className="w-full flex flex-col items-center"> 
+        {isGenerating && <AiEvaluationLoader />}
 
-      {typeof report === 'string' && report.trim().length > 0 && (
-        <Card className="w-full max-w-3xl shadow-xl border-indigo-100 bg-white">
+        {reports.length > 0 && reports.map((report, index) => (
+        <Card key={index} className="w-full max-w-3xl shadow-xl border-indigo-100 bg-white">
           <CardHeader>
             <CardTitle className="text-2xl text-indigo-800 flex items-center gap-2">
               <FileText className="w-6 h-6 text-indigo-600" />
@@ -277,7 +316,7 @@ export const ReassessmentPdfUpload: React.FC = () => {
                 return sections;
               };
 
-              const sections = parseReport(report!);
+              const sections = parseReport(report);
               return sections.map((section, i) => (
                 <div key={i} className="flex flex-col gap-4">
                   {section.type === 'student' && (
@@ -351,9 +390,11 @@ export const ReassessmentPdfUpload: React.FC = () => {
             })()}
           </CardContent>
         </Card>
-      )}
+      ))}
 
-      {!report && !isGenerating && uploadResponse && (
+      </div>
+
+      {reports.length === 0 && !isGenerating && uploadResponse && (
         <div className="mt-4 p-4 rounded bg-red-50 border border-red-200 text-red-800 text-sm">
           <div className="font-semibold mb-2">No evaluation report available.</div>
           <div>Please ensure the uploaded file is valid and try again.</div>
