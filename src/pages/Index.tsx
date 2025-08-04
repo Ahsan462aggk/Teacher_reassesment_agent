@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthLayout } from '@/components/auth/AuthLayout';
-import { TeacherDashboard } from '@/components/dashboard/TeacherDashboard';
+import TeacherDashboard from '@/components/dashboard/TeacherDashboard';
 
 const Index = () => {
   const { user, isLoading } = useAuth();

@@ -182,3 +182,16 @@ All colors MUST be HSL.
     transform: scale(1);
   }
 }
+
+/* Ensure ReassessmentPdfUpload component is visible */
+.reassessment-visible .w-full.slide-up {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.glass-card {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
